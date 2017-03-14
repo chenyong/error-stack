@@ -1,0 +1,99 @@
+{:package "client",
+ :files {"comp.container" {:ns ["ns"
+                                "client.comp.container"
+                                [":require"
+                                 ["[]" "hsl.core" ":refer" ["[]" "hsl"]]
+                                 ["[]" "respo-ui.style" ":as" "ui"]
+                                 ["[]" "respo.alias" ":refer" ["[]" "create-comp" "div" "button" "span" "pre"]]
+                                 ["[]" "respo.comp.space" ":refer" ["[]" "comp-space"]]
+                                 ["[]" "respo.comp.text" ":refer" ["[]" "comp-text"]]]],
+                           :defs {"comp-container" ["def"
+                                                    "comp-container"
+                                                    ["create-comp"
+                                                     ":container"
+                                                     ["fn"
+                                                      ["store"]
+                                                      ["fn"
+                                                       ["state" "mutate!"]
+                                                       ["div"
+                                                        ["{}" [":style" ["merge" "ui/global" "style-container"]]]
+                                                        ["div"
+                                                         ["{}"]
+                                                         ["comp-text" "|Click to generate error" "nil"]
+                                                         ["comp-space" "8" "nil"]
+                                                         ["button"
+                                                          ["{}"
+                                                           [":style" "ui/button"]
+                                                           [":event" ["{}" [":click" "on-break"]]]]
+                                                          ["comp-text" "|Do it" "nil"]]]
+                                                        ["pre"
+                                                         ["{}"
+                                                          [":style" "style-error"]
+                                                          [":attrs" ["{}" [":inner-text" "store"]]]]]]]]]],
+                                  "style-error" ["def"
+                                                 "style-error"
+                                                 ["{}"
+                                                  [":background-color" ["hsl" "0" "0" "97"]]
+                                                  [":padding" "8"]
+                                                  [":font-family" "|Menlo"]
+                                                  [":font-size" "13"]]],
+                                  "on-break" ["defn" "on-break" ["e" "dispatch!"] ["js/X"]],
+                                  "style-container" ["def" "style-container" ["{}" [":padding" "16"]]]},
+                           :procs []},
+         "main" {:ns ["ns"
+                      "client.main"
+                      [":require"
+                       ["[]"
+                        "respo.core"
+                        ":refer"
+                        ["[]" "render!" "clear-cache!" "falsify-stage!" "render-element" "gc-states!"]]
+                       ["[]" "client.comp.container" ":refer" ["[]" "comp-container"]]
+                       ["[]" "cljs.reader" ":refer" ["[]" "read-string"]]]],
+                 :defs {"ref-states" ["defonce" "ref-states" ["atom" ["{}"]]],
+                        "dispatch!" ["defn" "dispatch!" ["op" "op-data"] ["reset!" "ref-store" "op-data"]],
+                        "ref-store" ["defonce" "ref-store" ["atom" "|"]],
+                        "-main!" ["defn"
+                                  "-main!"
+                                  []
+                                  ["enable-console-print!"]
+                                  ["if"
+                                   ["not" ["empty?" "ssr-stages"]]
+                                   ["let"
+                                    [["target" [".querySelector" "js/document" "|#app"]]]
+                                    ["falsify-stage!"
+                                     "target"
+                                     ["render-element" ["comp-container" "@ref-store" "ssr-stages"] "ref-states"]
+                                     "dispatch!"]]]
+                                  ["render-app!"]
+                                  ["add-watch" "ref-store" ":gc" ["fn" [] ["gc-states!" "ref-states"]]]
+                                  ["add-watch" "ref-store" ":changes" "render-app!"]
+                                  ["add-watch" "ref-states" ":changes" "render-app!"]
+                                  ["listen-to-errors!"]
+                                  ["println" "|App started!"]],
+                        "render-app!" ["defn"
+                                       "render-app!"
+                                       []
+                                       ["let"
+                                        [["target" [".querySelector" "js/document" "|#app"]]]
+                                        ["render!" ["comp-container" "@ref-store"] "target" "dispatch!" "ref-states"]]],
+                        "listen-to-errors!" ["defn"
+                                             "listen-to-errors!"
+                                             []
+                                             [".log" "js/console" "|Listen to errors..."]
+                                             [".addEventListener"
+                                              "js/window"
+                                              "|error"
+                                              ["fn" ["error"] ["dispatch!" ":error" "error.error.stack"]]]],
+                        "on-jsload!" ["defn"
+                                      "on-jsload!"
+                                      []
+                                      ["clear-cache!"]
+                                      ["render-app!"]
+                                      ["println" "|Code updated."]],
+                        "ssr-stages" ["def"
+                                      "ssr-stages"
+                                      ["let"
+                                       [["ssr-element" [".querySelector" "js/document" "|#ssr-stages"]]
+                                        ["ssr-markup" [".getAttribute" "ssr-element" "|content"]]]
+                                       ["read-string" "ssr-markup"]]]},
+                 :procs [["set!" [".-onload" "js/window"] "-main!"]]}}}
